@@ -1,0 +1,100 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { Heart, ShoppingCart, Star, MapPin, Leaf } from "lucide-react";
+import { cn, formatCurrency } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import type { Product } from "@/types";
+
+interface ProductCardProps {
+  product: Product;
+  onAddToCart?: () => void;
+  className?: string;
+}
+
+export function ProductCard({ product, onAddToCart, className }: ProductCardProps) {
+  const primaryImage = product.images?.find((img) => img.isPrimary) ?? product.images?.[0];
+  const imageUrl = primaryImage?.thumbnailUrl || "/placeholder-product.png";
+
+  return (
+    <div className={cn("group relative rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md", className)}>
+      {/* Image */}
+      <Link href={`/marketplace/${product.id}`} className="block">
+        <div className="relative aspect-square overflow-hidden rounded-t-2xl bg-gray-50">
+          <Image
+            src={imageUrl}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform group-hover:scale-105"
+            sizes="(max-width: 768px) 50vw, 33vw"
+          />
+          {/* Badges */}
+          <div className="absolute left-2 top-2 flex flex-col gap-1">
+            {product.isOrganic && (
+              <Badge variant="organic" className="text-[10px]">
+                <Leaf className="mr-0.5 h-3 w-3" /> Organic
+              </Badge>
+            )}
+            {product.isFeatured && (
+              <Badge variant="accent" className="text-[10px]">⭐ Featured</Badge>
+            )}
+          </div>
+        </div>
+      </Link>
+
+      {/* Wishlist */}
+      <button
+        className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
+        aria-label="Add to wishlist"
+      >
+        <Heart className="h-4 w-4 text-gray-400" />
+      </button>
+
+      {/* Content */}
+      <div className="p-3">
+        <Link href={`/marketplace/${product.id}`}>
+          <h3 className="line-clamp-2 text-sm font-medium text-gray-900">{product.name}</h3>
+        </Link>
+
+        {/* Price */}
+        <p className="mt-1 text-base font-bold text-primary">
+          {formatCurrency(Number(product.price))}/{product.unit}
+        </p>
+
+        {/* Rating */}
+        {product.totalReviews > 0 && (
+          <div className="mt-1 flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+            <span className="text-xs font-medium text-gray-700">
+              {Number(product.ratingAverage).toFixed(1)}
+            </span>
+            <span className="text-xs text-gray-400">({product.totalReviews})</span>
+          </div>
+        )}
+
+        {/* Farmer location */}
+        {product.farmer && (
+          <div className="mt-1.5 flex items-center gap-1 text-xs text-gray-500">
+            <MapPin className="h-3 w-3" />
+            <span className="truncate">{product.farmer.province}</span>
+            {product.farmer.verificationStatus === "approved" && (
+              <span className="ml-auto text-primary" title="Verified Farmer">✓</span>
+            )}
+          </div>
+        )}
+
+        {/* Add to cart */}
+        {onAddToCart && (
+          <button
+            onClick={onAddToCart}
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-50 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary-100 active:scale-[0.97]"
+          >
+            <ShoppingCart className="h-3.5 w-3.5" />
+            Add to Cart
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

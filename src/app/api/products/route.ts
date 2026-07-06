@@ -1,0 +1,102 @@
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
+
+// GET /api/products — List products with filtering
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1");
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
+  const categoryId = searchParams.get("categoryId");
+  const search = searchParams.get("search");
+  const sortBy = searchParams.get("sortBy") || "newest";
+  const isOrganic = searchParams.get("isOrganic");
+
+  const skip = (page - 1) * limit;
+
+  const where: any = {
+    isActive: true,
+    deletedAt: null,
+  };
+
+  if (categoryId) where.categoryId = categoryId;
+  if (isOrganic === "true") where.isOrganic = true;
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" } },
+      { description: { contains: search, mode: "insensitive" } },
+    ];
+  }
+
+  const orderBy: any = (() => {
+    switch (sortBy) {
+      case "price_asc": return { price: "asc" };
+      case "price_desc": return { price: "desc" };
+      case "rating": return { ratingAverage: "desc" };
+      case "popular": return { totalSold: "desc" };
+      default: return { createdAt: "desc" };
+    }
+  })();
+
+  const [products, total] = await Promise.all([
+    db.product.findMany({
+      where,
+      include: {
+        images: { orderBy: { sortOrder: "asc" }, take: 1 },
+        farmer: { select: { id: true, farmName: true, province: true, verificationStatus: true, ratingAverage: true } },
+        category: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy,
+      skip,
+      take: limit,
+    }),
+    db.product.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    success: true,
+    data: products,
+    meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+  });
+}
+
+// POST /api/products — Create product (farmer only)
+export async function POST(request: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const farmer = await db.farmer.findUnique({
+    where: { userId: user.id },
+  });
+
+  if (!farmer || farmer.verificationStatus !== "approved") {
+    return NextResponse.json({ error: "Only verified farmers can list products" }, { status: 403 });
+  }
+
+  const body = await request.json();
+
+  const product = await db.product.create({
+    data: {
+      farmerId: farmer.id,
+      categoryId: body.categoryId,
+      name: body.name,
+      description: body.description,
+      price: body.price,
+      unit: body.unit,
+      availableQuantity: body.availableQuantity,
+      minimumOrder: body.minimumOrder || 1,
+      harvestDate: body.harvestDate ? new Date(body.harvestDate) : null,
+      isOrganic: body.isOrganic || false,
+    },
+    include: {
+      images: true,
+      farmer: { select: { id: true, farmName: true, province: true } },
+    },
+  });
+
+  return NextResponse.json({ success: true, data: product }, { status: 201 });
+}

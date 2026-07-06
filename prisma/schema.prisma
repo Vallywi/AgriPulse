@@ -1,0 +1,620 @@
+// AgriPulse Marketplace — Prisma Schema
+// Source of truth: docs/DATABASE.md
+// Database: Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ═══════════════════════════════════════
+// ENUMS
+// ═══════════════════════════════════════
+
+enum UserRole {
+  consumer
+  farmer
+  restaurant
+  grocery
+  admin
+  super_admin
+}
+
+enum VerificationStatus {
+  pending
+  under_review
+  approved
+  rejected
+}
+
+enum ProductUnit {
+  kg
+  piece
+  bundle
+  sack
+  crate
+}
+
+enum OrderStatus {
+  pending
+  confirmed
+  harvesting
+  packed
+  in_transit
+  delivered
+  cancelled
+  refunded
+}
+
+enum PaymentMethod {
+  gcash
+  maya
+  bank_transfer
+  cod
+  card
+}
+
+enum PaymentStatus {
+  pending
+  processing
+  completed
+  failed
+  refunded
+}
+
+enum PayoutMethod {
+  gcash
+  maya
+  bank_transfer
+}
+
+enum DeliveryStatus {
+  preparing
+  picked_up
+  in_transit
+  out_for_delivery
+  delivered
+  failed
+}
+
+enum MessageType {
+  text
+  image
+  product_link
+  system
+}
+
+enum DiscountType {
+  percentage
+  fixed_amount
+}
+
+// ═══════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  phone        String?   @unique @db.VarChar(15)
+  email        String?   @unique @db.VarChar(255)
+  passwordHash String?   @map("password_hash") @db.VarChar(255)
+  firstName    String    @map("first_name") @db.VarChar(50)
+  lastName     String    @map("last_name") @db.VarChar(50)
+  avatarUrl    String?   @map("avatar_url") @db.VarChar(500)
+  role         UserRole  @default(consumer)
+  isVerified   Boolean   @default(false) @map("is_verified")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at") @db.Timestamptz
+  locale       String    @default("en") @db.VarChar(5)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz
+
+  farmer            Farmer?
+  addresses         Address[]
+  orders            Order[]
+  reviews           Review[]
+  wishlist          Wishlist[]
+  notifications     Notification[]
+  messages          Message[]
+  chatParticipants  ChatParticipant[]
+  analytics         Analytics[]
+  reviewedFarmers   FarmerVerification[] @relation("VerificationReviewer")
+
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ═══════════════════════════════════════
+// FARMERS
+// ═══════════════════════════════════════
+
+model Farmer {
+  id                     String             @id @default(uuid()) @db.Uuid
+  userId                 String             @unique @map("user_id") @db.Uuid
+  farmName               String             @map("farm_name") @db.VarChar(100)
+  farmSizeHectares       Decimal            @map("farm_size_hectares") @db.Decimal(10, 2)
+  province               String             @db.VarChar(100)
+  municipality           String             @db.VarChar(100)
+  barangay               String             @db.VarChar(100)
+  latitude               Decimal?           @db.Decimal(10, 8)
+  longitude              Decimal?           @db.Decimal(11, 8)
+  primaryCrops           String[]           @map("primary_crops")
+  farmingExperienceYears Int                @map("farming_experience_years")
+  farmPhotoUrl           String?            @map("farm_photo_url") @db.VarChar(500)
+  cooperativeName        String?            @map("cooperative_name") @db.VarChar(100)
+  verificationStatus     VerificationStatus @default(pending) @map("verification_status")
+  isPremium              Boolean            @default(false) @map("is_premium")
+  ratingAverage          Decimal            @default(0) @map("rating_average") @db.Decimal(3, 2)
+  totalReviews           Int                @default(0) @map("total_reviews")
+  totalSales             Int                @default(0) @map("total_sales")
+  payoutMethod           PayoutMethod?      @map("payout_method")
+  payoutAccountNumber    String?            @map("payout_account_number") @db.VarChar(50)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products     Product[]
+  orderItems   OrderItem[]
+  verification FarmerVerification?
+
+  @@index([province])
+  @@index([verificationStatus])
+  @@index([ratingAverage(sort: Desc)])
+  @@map("farmers")
+}
+
+// ═══════════════════════════════════════
+// CATEGORIES
+// ═══════════════════════════════════════
+
+model Category {
+  id          String    @id @default(uuid()) @db.Uuid
+  parentId    String?   @map("parent_id") @db.Uuid
+  name        String    @db.VarChar(50)
+  slug        String    @unique @db.VarChar(60)
+  description String?   @db.VarChar(255)
+  iconUrl     String?   @map("icon_url") @db.VarChar(500)
+  sortOrder   Int       @default(0) @map("sort_order")
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  parent        Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  subcategories Category[] @relation("CategoryHierarchy")
+  products      Product[]
+
+  @@index([parentId])
+  @@index([sortOrder])
+  @@map("categories")
+}
+
+// ═══════════════════════════════════════
+// PRODUCTS
+// ═══════════════════════════════════════
+
+model Product {
+  id                String      @id @default(uuid()) @db.Uuid
+  farmerId          String      @map("farmer_id") @db.Uuid
+  categoryId        String      @map("category_id") @db.Uuid
+  name              String      @db.VarChar(100)
+  description       String      @db.Text
+  price             Decimal     @db.Decimal(10, 2)
+  unit              ProductUnit
+  availableQuantity Decimal     @map("available_quantity") @db.Decimal(10, 2)
+  minimumOrder      Decimal     @default(1) @map("minimum_order") @db.Decimal(10, 2)
+  harvestDate       DateTime?   @map("harvest_date") @db.Date
+  isOrganic         Boolean     @default(false) @map("is_organic")
+  isActive          Boolean     @default(true) @map("is_active")
+  isFeatured        Boolean     @default(false) @map("is_featured")
+  ratingAverage     Decimal     @default(0) @map("rating_average") @db.Decimal(3, 2)
+  totalReviews      Int         @default(0) @map("total_reviews")
+  totalSold         Int         @default(0) @map("total_sold")
+  viewCount         Int         @default(0) @map("view_count")
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt         DateTime?   @map("deleted_at") @db.Timestamptz
+
+  farmer     Farmer         @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  category   Category       @relation(fields: [categoryId], references: [id])
+  images     ProductImage[]
+  orderItems OrderItem[]
+  reviews    Review[]
+  wishlist   Wishlist[]
+  chats      Chat[]
+
+  @@index([farmerId])
+  @@index([categoryId])
+  @@index([price])
+  @@index([isActive, isFeatured])
+  @@index([createdAt(sort: Desc)])
+  @@map("products")
+}
+
+// ═══════════════════════════════════════
+// PRODUCT IMAGES
+// ═══════════════════════════════════════
+
+model ProductImage {
+  id           String   @id @default(uuid()) @db.Uuid
+  productId    String   @map("product_id") @db.Uuid
+  imageUrl     String   @map("image_url") @db.VarChar(500)
+  thumbnailUrl String   @map("thumbnail_url") @db.VarChar(500)
+  sortOrder    Int      @default(0) @map("sort_order")
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, sortOrder])
+  @@map("product_images")
+}
+
+// ═══════════════════════════════════════
+// ADDRESSES
+// ═══════════════════════════════════════
+
+model Address {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  label         String   @db.VarChar(30)
+  recipientName String   @map("recipient_name") @db.VarChar(100)
+  phone         String   @db.VarChar(15)
+  streetAddress String   @map("street_address") @db.VarChar(255)
+  barangay      String   @db.VarChar(100)
+  municipality  String   @db.VarChar(100)
+  province      String   @db.VarChar(100)
+  postalCode    String   @map("postal_code") @db.VarChar(10)
+  latitude      Decimal? @db.Decimal(10, 8)
+  longitude     Decimal? @db.Decimal(11, 8)
+  isDefault     Boolean  @default(false) @map("is_default")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orders Order[]
+
+  @@index([userId])
+  @@index([userId, isDefault])
+  @@map("addresses")
+}
+
+// ═══════════════════════════════════════
+// ORDERS
+// ═══════════════════════════════════════
+
+model Order {
+  id                  String        @id @default(uuid()) @db.Uuid
+  orderNumber         String        @unique @map("order_number") @db.VarChar(20)
+  buyerId             String        @map("buyer_id") @db.Uuid
+  addressId           String        @map("address_id") @db.Uuid
+  status              OrderStatus   @default(pending)
+  subtotal            Decimal       @db.Decimal(12, 2)
+  deliveryFee         Decimal       @map("delivery_fee") @db.Decimal(10, 2)
+  serviceFee          Decimal       @default(0) @map("service_fee") @db.Decimal(10, 2)
+  discountAmount      Decimal       @default(0) @map("discount_amount") @db.Decimal(10, 2)
+  totalAmount         Decimal       @map("total_amount") @db.Decimal(12, 2)
+  paymentMethod       PaymentMethod @map("payment_method")
+  paymentStatus       PaymentStatus @default(pending) @map("payment_status")
+  deliveryDate        DateTime?     @map("delivery_date") @db.Date
+  deliveryTimeSlot    String?       @map("delivery_time_slot") @db.VarChar(20)
+  specialInstructions String?       @map("special_instructions") @db.Text
+  cancelledAt         DateTime?     @map("cancelled_at") @db.Timestamptz
+  cancellationReason  String?       @map("cancellation_reason") @db.Text
+  deliveredAt         DateTime?     @map("delivered_at") @db.Timestamptz
+  createdAt           DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  buyer    User             @relation(fields: [buyerId], references: [id])
+  address  Address          @relation(fields: [addressId], references: [id])
+  items    OrderItem[]
+  payment  Payment?
+  delivery DeliveryTracking?
+  chats    Chat[]
+
+  @@index([buyerId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([buyerId, status])
+  @@index([createdAt(sort: Desc)])
+  @@map("orders")
+}
+
+// ═══════════════════════════════════════
+// ORDER ITEMS
+// ═══════════════════════════════════════
+
+model OrderItem {
+  id          String      @id @default(uuid()) @db.Uuid
+  orderId     String      @map("order_id") @db.Uuid
+  productId   String      @map("product_id") @db.Uuid
+  farmerId    String      @map("farmer_id") @db.Uuid
+  productName String      @map("product_name") @db.VarChar(100)
+  unitPrice   Decimal     @map("unit_price") @db.Decimal(10, 2)
+  quantity    Decimal     @db.Decimal(10, 2)
+  unit        ProductUnit
+  subtotal    Decimal     @db.Decimal(12, 2)
+  status      OrderStatus @default(pending)
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product  @relation(fields: [productId], references: [id])
+  farmer  Farmer   @relation(fields: [farmerId], references: [id])
+  review  Review?
+
+  @@index([orderId])
+  @@index([productId])
+  @@index([farmerId])
+  @@map("order_items")
+}
+
+// ═══════════════════════════════════════
+// PAYMENTS
+// ═══════════════════════════════════════
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  orderId           String        @unique @map("order_id") @db.Uuid
+  externalPaymentId String?       @map("external_payment_id") @db.VarChar(100)
+  method            PaymentMethod
+  status            PaymentStatus @default(pending)
+  amount            Decimal       @db.Decimal(12, 2)
+  currency          String        @default("PHP") @db.VarChar(3)
+  gatewayResponse   Json?         @map("gateway_response")
+  paidAt            DateTime?     @map("paid_at") @db.Timestamptz
+  refundedAt        DateTime?     @map("refunded_at") @db.Timestamptz
+  refundAmount      Decimal?      @map("refund_amount") @db.Decimal(12, 2)
+  refundReason      String?       @map("refund_reason") @db.Text
+  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([externalPaymentId])
+  @@index([status])
+  @@map("payments")
+}
+
+// ═══════════════════════════════════════
+// DELIVERY TRACKING
+// ═══════════════════════════════════════
+
+model DeliveryTracking {
+  id                String         @id @default(uuid()) @db.Uuid
+  orderId           String         @unique @map("order_id") @db.Uuid
+  courierName       String?        @map("courier_name") @db.VarChar(100)
+  courierPhone      String?        @map("courier_phone") @db.VarChar(15)
+  trackingNumber    String?        @map("tracking_number") @db.VarChar(50)
+  currentStatus     DeliveryStatus @default(preparing) @map("current_status")
+  currentLatitude   Decimal?       @map("current_latitude") @db.Decimal(10, 8)
+  currentLongitude  Decimal?       @map("current_longitude") @db.Decimal(11, 8)
+  estimatedDelivery DateTime?      @map("estimated_delivery") @db.Timestamptz
+  pickedUpAt        DateTime?      @map("picked_up_at") @db.Timestamptz
+  deliveredAt       DateTime?      @map("delivered_at") @db.Timestamptz
+  deliveryProofUrl  String?        @map("delivery_proof_url") @db.VarChar(500)
+  failedReason      String?        @map("failed_reason") @db.Text
+  createdAt         DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime       @updatedAt @map("updated_at") @db.Timestamptz
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([currentStatus])
+  @@map("delivery_tracking")
+}
+
+// ═══════════════════════════════════════
+// REVIEWS
+// ═══════════════════════════════════════
+
+model Review {
+  id              String    @id @default(uuid()) @db.Uuid
+  userId          String    @map("user_id") @db.Uuid
+  productId       String    @map("product_id") @db.Uuid
+  orderItemId     String    @unique @map("order_item_id") @db.Uuid
+  rating          Int       @db.SmallInt
+  comment         String    @db.Text
+  isAnonymous     Boolean   @default(false) @map("is_anonymous")
+  isVisible       Boolean   @default(true) @map("is_visible")
+  farmerReply     String?   @map("farmer_reply") @db.Text
+  farmerRepliedAt DateTime? @map("farmer_replied_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  user      User      @relation(fields: [userId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id])
+
+  @@index([productId])
+  @@index([userId])
+  @@index([productId, rating])
+  @@map("reviews")
+}
+
+// ═══════════════════════════════════════
+// WISHLIST
+// ═══════════════════════════════════════
+
+model Wishlist {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  productId String   @map("product_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("wishlist")
+}
+
+// ═══════════════════════════════════════
+// CHATS
+// ═══════════════════════════════════════
+
+model Chat {
+  id                 String    @id @default(uuid()) @db.Uuid
+  orderId            String?   @map("order_id") @db.Uuid
+  productId          String?   @map("product_id") @db.Uuid
+  lastMessageAt      DateTime? @map("last_message_at") @db.Timestamptz
+  lastMessagePreview String?   @map("last_message_preview") @db.VarChar(100)
+  isActive           Boolean   @default(true) @map("is_active")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  order        Order?            @relation(fields: [orderId], references: [id])
+  product      Product?          @relation(fields: [productId], references: [id])
+  messages     Message[]
+  participants ChatParticipant[]
+
+  @@index([orderId])
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("chats")
+}
+
+// ═══════════════════════════════════════
+// CHAT PARTICIPANTS
+// ═══════════════════════════════════════
+
+model ChatParticipant {
+  id          String    @id @default(uuid()) @db.Uuid
+  chatId      String    @map("chat_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  unreadCount Int       @default(0) @map("unread_count")
+  lastReadAt  DateTime? @map("last_read_at") @db.Timestamptz
+  joinedAt    DateTime  @default(now()) @map("joined_at") @db.Timestamptz
+
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatId, userId])
+  @@index([userId])
+  @@map("chat_participants")
+}
+
+// ═══════════════════════════════════════
+// MESSAGES
+// ═══════════════════════════════════════
+
+model Message {
+  id          String      @id @default(uuid()) @db.Uuid
+  chatId      String      @map("chat_id") @db.Uuid
+  senderId    String      @map("sender_id") @db.Uuid
+  content     String?     @db.Text
+  messageType MessageType @default(text) @map("message_type")
+  imageUrl    String?     @map("image_url") @db.VarChar(500)
+  isRead      Boolean     @default(false) @map("is_read")
+  readAt      DateTime?   @map("read_at") @db.Timestamptz
+  createdAt   DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  sender User @relation(fields: [senderId], references: [id])
+
+  @@index([chatId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
+
+// ═══════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════
+
+model Notification {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  type      String    @db.VarChar(50)
+  title     String    @db.VarChar(100)
+  body      String    @db.Text
+  data      Json?
+  isRead    Boolean   @default(false) @map("is_read")
+  readAt    DateTime? @map("read_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, type])
+  @@map("notifications")
+}
+
+// ═══════════════════════════════════════
+// FARMER VERIFICATION
+// ═══════════════════════════════════════
+
+model FarmerVerification {
+  id                   String             @id @default(uuid()) @db.Uuid
+  farmerId             String             @unique @map("farmer_id") @db.Uuid
+  validIdUrl           String             @map("valid_id_url") @db.VarChar(500)
+  validIdType          String             @map("valid_id_type") @db.VarChar(50)
+  farmCertificationUrl String?            @map("farm_certification_url") @db.VarChar(500)
+  dtiRegistrationUrl   String?            @map("dti_registration_url") @db.VarChar(500)
+  cooperativeCertUrl   String?            @map("cooperative_cert_url") @db.VarChar(500)
+  status               VerificationStatus @default(pending)
+  reviewedBy           String?            @map("reviewed_by") @db.Uuid
+  reviewedAt           DateTime?          @map("reviewed_at") @db.Timestamptz
+  rejectionReason      String?            @map("rejection_reason") @db.Text
+  notes                String?            @db.Text
+  submittedAt          DateTime           @default(now()) @map("submitted_at") @db.Timestamptz
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz
+
+  farmer   Farmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  reviewer User?  @relation("VerificationReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([status])
+  @@index([submittedAt])
+  @@map("farmer_verification")
+}
+
+// ═══════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════
+
+model Analytics {
+  id         String   @id @default(uuid()) @db.Uuid
+  eventType  String   @map("event_type") @db.VarChar(50)
+  userId     String?  @map("user_id") @db.Uuid
+  entityType String?  @map("entity_type") @db.VarChar(30)
+  entityId   String?  @map("entity_id") @db.Uuid
+  metadata   Json?
+  sessionId  String?  @map("session_id") @db.VarChar(50)
+  deviceType String?  @map("device_type") @db.VarChar(20)
+  ipAddress  String?  @map("ip_address") @db.Inet
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([eventType, createdAt])
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@map("analytics")
+}
+
+// ═══════════════════════════════════════
+// PROMO CODES
+// ═══════════════════════════════════════
+
+model PromoCode {
+  id                String       @id @default(uuid()) @db.Uuid
+  code              String       @unique @db.VarChar(20)
+  description       String       @db.VarChar(255)
+  discountType      DiscountType @map("discount_type")
+  discountValue     Decimal      @map("discount_value") @db.Decimal(10, 2)
+  minOrderAmount    Decimal      @default(0) @map("min_order_amount") @db.Decimal(10, 2)
+  maxDiscountAmount Decimal?     @map("max_discount_amount") @db.Decimal(10, 2)
+  usageLimit        Int?         @map("usage_limit")
+  usedCount         Int          @default(0) @map("used_count")
+  perUserLimit      Int          @default(1) @map("per_user_limit")
+  validFrom         DateTime     @map("valid_from") @db.Timestamptz
+  validUntil        DateTime     @map("valid_until") @db.Timestamptz
+  isActive          Boolean      @default(true) @map("is_active")
+  createdAt         DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([validFrom, validUntil, isActive])
+  @@map("promo_codes")
+}
