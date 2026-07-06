@@ -1,41 +1,48 @@
 # 🌱 AgriPulse Marketplace
 
 > **"The Heartbeat of Smarter Farming."**
->
-> From Farm to Market, Fair Prices for Every Farmer.
 
-A mobile-first agricultural marketplace connecting Filipino farmers directly with consumers, restaurants, and grocery stores — eliminating middlemen and ensuring fair prices.
+AgriPulse is a mobile-first agricultural marketplace connecting Filipino farmers directly with consumers, restaurants, and grocery stores — eliminating middlemen and ensuring fair prices.
 
 ## Tech Stack
 
-- **Frontend**: Next.js 15 (App Router), TypeScript, TailwindCSS, Shadcn UI, Zustand
-- **Backend**: Next.js Server Actions + Route Handlers, Prisma ORM
-- **Database**: Supabase PostgreSQL
-- **Auth**: Supabase Auth (OTP, OAuth)
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: TailwindCSS + Shadcn UI
+- **State**: Zustand
+- **Database**: PostgreSQL (Supabase)
+- **Auth**: Supabase Auth (OTP + OAuth)
 - **Storage**: Supabase Storage
 - **Realtime**: Supabase Realtime
+- **ORM**: Prisma
 - **Deployment**: Vercel + Supabase
 
 ## Getting Started
 
+### Prerequisites
+
+- Node.js 18+
+- A Supabase project ([supabase.com](https://supabase.com))
+
+### Setup
+
 ```bash
-# Install dependencies
+# Clone and install
+git clone <repo-url>
+cd AgriPulse
 npm install
 
-# Copy env file
+# Set up environment
 cp .env.local.example .env.local
-# Fill in your Supabase credentials
+# Edit .env.local with your Supabase credentials
 
-# Generate Prisma client
-npm run db:generate
-
-# Push schema to database
-npm run db:push
+# Push database schema
+npx prisma db push
 
 # Seed categories
 npm run db:seed
 
-# Start dev server
+# Start development
 npm run dev
 ```
 
@@ -45,57 +52,44 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── (auth)/             # Login, Register
-│   ├── (buyer)/            # Marketplace, Cart, Orders, Profile
-│   ├── (farmer)/           # Farmer Dashboard
-│   ├── (admin)/            # Admin Panel
-│   └── api/                # API Routes
-├── components/
-│   ├── ui/                 # Reusable UI primitives
-│   ├── layout/             # Layout components (BottomNav)
-│   └── product-card.tsx    # Product display card
-├── lib/
-│   ├── supabase/           # Supabase clients (client, server, middleware)
-│   ├── db.ts               # Prisma client
-│   └── utils.ts            # Utility functions
-├── store/                  # Zustand stores
-├── types/                  # TypeScript types
-└── styles/                 # Global CSS
+├── app/                 # Next.js App Router
+│   ├── (auth)/          # Login, Register
+│   ├── (buyer)/         # Marketplace, Cart, Orders, Profile
+│   ├── (farmer)/        # Dashboard, Products, Analytics
+│   ├── (admin)/         # Admin panel
+│   └── api/             # API routes
+├── components/          # Reusable UI components
+├── lib/                 # Supabase clients, Prisma, utilities
+├── store/               # Zustand stores
+├── types/               # TypeScript types
+└── styles/              # Global CSS
 ```
 
-## Available Scripts
+## Scripts
 
-| Script | Description |
-|--------|-------------|
-| `npm run dev` | Start development server |
-| `npm run build` | Build for production |
-| `npm run start` | Start production server |
-| `npm run db:generate` | Generate Prisma client |
-| `npm run db:push` | Push schema to database |
-| `npm run db:migrate` | Run migrations |
-| `npm run db:seed` | Seed database |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server |
+| `npm run build` | Production build |
+| `npm run lint` | Run ESLint |
+| `npm run db:push` | Push schema to DB |
+| `npm run db:seed` | Seed categories |
 | `npm run db:studio` | Open Prisma Studio |
 
 ## Deployment
 
 ### Vercel
-```bash
-vercel --prod
-```
+
+1. Connect repo to Vercel
+2. Set environment variables
+3. Deploy (automatic on push to `main`)
 
 ### Supabase
-Migrations auto-deploy via GitHub Actions when files change in `prisma/`.
 
-## Documentation
-
-All specs live in `/docs`:
-- `PRD.md` — Product requirements
-- `DATABASE.md` — Schema design
-- `API_SPEC.md` — API endpoints
-- `DESIGN_SYSTEM.md` — Colors, components
-- `DEPLOYMENT.md` — Infrastructure
+- Database auto-managed
+- Enable RLS policies in dashboard
+- Configure Auth providers (Phone, Google, Facebook)
 
 ## License
 
-Private — All rights reserved.
+MIT — Built with ❤️ for Filipino farmers.

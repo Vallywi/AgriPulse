@@ -1,17 +1,28 @@
 {
   "name": "AgriPulse Marketplace",
   "short_name": "AgriPulse",
-  "description": "From Farm to Market, Fair Prices for Every Farmer",
+  "description": "From Farm to Market, Fair Prices for Every Farmer. Fresh produce directly from Filipino farmers.",
   "start_url": "/marketplace",
   "display": "standalone",
   "background_color": "#F8F9FA",
   "theme_color": "#2E7D32",
   "orientation": "portrait",
+  "scope": "/",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
   ],
   "categories": ["shopping", "food"],
-  "lang": "en-PH"
+  "lang": "en-PH",
+  "dir": "ltr"
 }
