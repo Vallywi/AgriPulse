@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { HomeContent } from "./home-content";
-import type { Product } from "@/types";
+import type { Product, Category } from "@/types";
 
 export const metadata: Metadata = {
   title: "Home - AgriPulse",
@@ -74,5 +74,5 @@ export default async function HomePage() {
     sortOrder: cat.sort_order,
   }));
 
-  return <HomeContent featuredProducts={transformedProducts as Product[]} categories={transformedCategories} />;
+  return <HomeContent featuredProducts={transformedProducts as Product[]} categories={transformedCategories as Category[]} />;
 }
