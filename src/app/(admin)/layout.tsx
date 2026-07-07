@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { LayoutDashboard, Users, ShieldCheck, Package, BarChart3, FileText } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const ADMIN_NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -16,8 +17,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 hidden h-full w-64 border-r bg-white lg:block">
         <div className="flex h-14 items-center gap-2 border-b px-6">
-          <span className="text-xl">🌱</span>
-          <span className="font-bold text-primary">AgriPulse</span>
+          <Logo showText={true} iconSize="h-8 w-8" imageWidth={32} imageHeight={32} />
           <span className="ml-auto rounded-md bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700">ADMIN</span>
         </div>
         <nav className="p-4 space-y-1">

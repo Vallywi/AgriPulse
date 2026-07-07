@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { ShoppingCart, Wheat, UtensilsCrossed, Store, Sprout, Mail, Eye, EyeOff } from "lucide-react";
+import { ShoppingCart, Wheat, UtensilsCrossed, Store, Mail, Eye, EyeOff } from "lucide-react";
+import { Logo } from "@/components/logo";
 import type { UserRole } from "@/types";
 
 const ROLES: { value: UserRole; label: string; icon: React.ComponentType<{ className?: string }>; desc: string }[] = [
@@ -165,9 +166,7 @@ export default function RegisterPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-100 text-primary">
-          <Sprout className="h-7 w-7" />
-        </div>
+        <Logo className="justify-center mb-2" showText={true} iconSize="h-14 w-14" imageWidth={56} imageHeight={56} />
         <h1 className="text-2xl font-bold text-gray-900">Create Account</h1>
         <p className="mt-2 text-sm text-gray-600">
           Join AgriPulse as a buyer or farmer

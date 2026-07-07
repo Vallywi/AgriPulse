@@ -1,39 +1,35 @@
-import { createClient } from "@/lib/supabase/client";
-
 /**
- * Upload a file to Supabase Storage and return the public URL.
+ * Upload a file via the /api/upload route (uses service role server-side).
  * @param file - The file to upload
- * @param bucket - Storage bucket name (e.g. "avatars", "products")
- * @param path - Path within the bucket (e.g. "user-id/filename.jpg")
+ * @param bucket - Storage bucket name ("avatars" or "products")
+ * @param path - Path within the bucket
  */
 export async function uploadFile(
   file: File,
   bucket: string,
   path: string
 ): Promise<{ url: string | null; error: string | null }> {
-  const supabase = createClient();
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("bucket", bucket);
+  formData.append("path", path);
 
-  const { error } = await supabase.storage
-    .from(bucket)
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: true,
-    });
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    body: formData,
+  });
 
-  if (error) {
-    return { url: null, error: error.message };
+  const data = await res.json();
+
+  if (!res.ok) {
+    return { url: null, error: data.error || "Upload failed" };
   }
 
-  const { data: urlData } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(path);
-
-  return { url: urlData.publicUrl, error: null };
+  return { url: data.url, error: null };
 }
 
 /**
  * Upload a profile avatar image.
- * Returns the public URL of the uploaded image.
  */
 export async function uploadAvatar(file: File, userId: string): Promise<{ url: string | null; error: string | null }> {
   const ext = file.name.split(".").pop() || "jpg";
@@ -43,7 +39,6 @@ export async function uploadAvatar(file: File, userId: string): Promise<{ url: s
 
 /**
  * Upload a product image.
- * Returns the public URL of the uploaded image.
  */
 export async function uploadProductImage(file: File, farmerId: string, productId: string, index: number): Promise<{ url: string | null; error: string | null }> {
   const ext = file.name.split(".").pop() || "jpg";

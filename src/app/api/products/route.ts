@@ -11,13 +11,29 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get("search");
   const sortBy = searchParams.get("sortBy") || "newest";
   const isOrganic = searchParams.get("isOrganic");
+  const mine = searchParams.get("mine");
 
   const skip = (page - 1) * limit;
 
   const where: any = {
-    isActive: true,
     deletedAt: null,
   };
+
+  // If farmer is fetching their own products, include inactive ones
+  if (mine === "true") {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const farmer = await db.farmer.findUnique({ where: { userId: user.id } });
+      if (farmer) {
+        where.farmerId = farmer.id;
+      } else {
+        return NextResponse.json({ success: true, data: [], meta: { page: 1, limit, total: 0, totalPages: 0 } });
+      }
+    }
+  } else {
+    where.isActive = true;
+  }
 
   if (categoryId) where.categoryId = categoryId;
   if (isOrganic === "true") where.isOrganic = true;

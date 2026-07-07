@@ -11,6 +11,7 @@ import {
   MessageSquare,
   User,
 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 const farmerNavItems = [
   { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -33,8 +34,8 @@ export default function FarmerLayout({
       {/* Top Header */}
       <header className="sticky top-0 z-40 border-b bg-white px-4 py-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-primary">🌾 AgriPulse</h1>
+          <div className="flex items-center gap-2">
+            <Logo showText={true} iconSize="h-9 w-9" imageWidth={36} imageHeight={36} />
             <p className="text-xs text-gray-500">Farmer Dashboard</p>
           </div>
           <Link href="/dashboard/profile">

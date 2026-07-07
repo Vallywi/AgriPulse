@@ -40,7 +40,7 @@ export function HomeContent({ featuredProducts, categories }: HomeContentProps) 
           <h1 className="text-xl font-bold text-gray-900">Welcome!</h1>
           <p className="text-sm text-gray-500">Fresh from Filipino farms</p>
         </div>
-        <Logo showText={false} iconSize="h-9 w-9" />
+        <Logo showText={false} iconSize="h-10 w-10" imageWidth={44} imageHeight={44} />
       </div>
 
       {/* Banner */}
@@ -95,20 +95,28 @@ export function HomeContent({ featuredProducts, categories }: HomeContentProps) 
             See All
           </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {featuredProducts.map((product, index) => (
-            <div
-              key={product.id}
-              className="animate-fade-in-up"
-              style={{ animationDelay: `${(index + 4) * 75}ms`, opacity: 0 }}
-            >
-              <ProductCard
-                product={product}
-                onAddToCart={() => handleAddToCart(product)}
-              />
-            </div>
-          ))}
-        </div>
+        {featuredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {featuredProducts.map((product, index) => (
+              <div
+                key={product.id}
+                className="animate-fade-in-up"
+                style={{ animationDelay: `${(index + 4) * 75}ms`, opacity: 0 }}
+              >
+                <ProductCard
+                  product={product}
+                  onAddToCart={() => handleAddToCart(product)}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center">
+            <Leaf className="mx-auto h-8 w-8 text-gray-300" />
+            <p className="mt-2 text-sm font-medium text-gray-500">No products yet</p>
+            <p className="mt-1 text-xs text-gray-400">Fresh produce will appear here once farmers list their harvest.</p>
+          </div>
+        )}
       </div>
     </div>
   );

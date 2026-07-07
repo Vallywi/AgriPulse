@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Leaf, Coins, ShieldCheck, ArrowRight, Sparkles, TrendingUp, Users, MapPin, Star } from "lucide-react";
+import { Leaf, Coins, ShieldCheck, ArrowRight, Sparkles, TrendingUp, Users, MapPin, Star, ChevronDown } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export default function LandingPage() {
@@ -45,7 +46,7 @@ export default function LandingPage() {
 
       {/* Header */}
       <header className="relative z-10 container flex items-center justify-between px-4 py-4">
-        <Logo showText={true} iconSize="h-8 w-8" />
+        <Logo showText={true} iconSize="h-10 w-10" imageWidth={44} imageHeight={44} />
         <div className="flex gap-2">
           <Link href="/login">
             <Button variant="ghost" size="sm">Sign In</Button>
@@ -85,7 +86,7 @@ export default function LandingPage() {
           className="animate-fade-in-up flex flex-col gap-4 sm:flex-row"
           style={{ animationDelay: "300ms", opacity: 0 }}
         >
-          <Link href="/marketplace">
+          <Link href="/login">
             <Button size="lg" className="w-full sm:w-auto text-base px-8 py-6 gap-2 shadow-lg shadow-green-200">
               Browse Fresh Produce
               <ArrowRight className="h-4 w-4" />
@@ -185,12 +186,51 @@ export default function LandingPage() {
                 Create Free Account
               </Button>
             </Link>
-            <Link href="/marketplace">
+            <Link href="/login">
               <Button size="lg" variant="outline" className="px-10 py-6 text-base">
                 Explore Marketplace
               </Button>
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="relative z-10 container px-4 py-16">
+        <h2 className="animate-fade-in-up mb-8 text-center text-2xl font-bold text-gray-900 sm:text-3xl" style={{ animationDelay: "1200ms", opacity: 0 }}>
+          Frequently Asked Questions
+        </h2>
+        <div className="mx-auto max-w-2xl space-y-3">
+          <FAQItem
+            question="What is AgriPulse?"
+            answer="AgriPulse is a farm-to-market platform that connects Filipino farmers directly with buyers. We eliminate middlemen so farmers earn more and buyers get fresher produce at better prices."
+            delay={1300}
+          />
+          <FAQItem
+            question="How do I buy fresh produce?"
+            answer="Simply create an account, browse the marketplace, add products to your cart, and checkout. You can pay via GCash, Maya, bank transfer, or cash on delivery."
+            delay={1400}
+          />
+          <FAQItem
+            question="How do I start selling as a farmer?"
+            answer="Register as a Farmer, complete your farm profile (farm name, location, crops), and start listing your products with photos, prices, and descriptions. Your products will appear in the marketplace immediately."
+            delay={1500}
+          />
+          <FAQItem
+            question="What areas do you deliver to?"
+            answer="We currently serve 50+ provinces across the Philippines. Delivery times depend on your location, but most orders arrive within 24-48 hours from the farm."
+            delay={1600}
+          />
+          <FAQItem
+            question="How are farmers verified?"
+            answer="All farmers go through a verification process where we check their farm details, location, and produce quality. Verified farmers display a green shield badge on their profiles."
+            delay={1700}
+          />
+          <FAQItem
+            question="What payment methods are accepted?"
+            answer="We accept GCash, Maya (PayMaya), bank transfer, and cash on delivery (COD). All digital payments are processed securely through our payment partners."
+            delay={1800}
+          />
         </div>
       </section>
 
@@ -266,6 +306,30 @@ function StatItem({ value, label, icon: Icon }: { value: string; label: string; 
       <Icon className="mx-auto mb-2 h-6 w-6 text-white/80" />
       <p className="text-2xl font-bold md:text-3xl">{value}</p>
       <p className="mt-1 text-sm text-white/80">{label}</p>
+    </div>
+  );
+}
+
+function FAQItem({ question, answer, delay }: { question: string; answer: string; delay: number }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div
+      className="animate-fade-in-up rounded-xl border border-gray-200 bg-white/80 backdrop-blur-sm overflow-hidden transition-all"
+      style={{ animationDelay: `${delay}ms`, opacity: 0 }}
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-gray-50"
+      >
+        <span className="text-sm font-medium text-gray-900">{question}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-gray-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-200 ease-in-out ${isOpen ? "max-h-40 pb-4" : "max-h-0"}`}
+      >
+        <p className="px-5 text-sm text-gray-600 leading-relaxed">{answer}</p>
+      </div>
     </div>
   );
 }

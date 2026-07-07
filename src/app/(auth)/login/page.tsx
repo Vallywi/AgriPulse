@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
-import { Sprout, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -84,10 +84,7 @@ export default function LoginPage() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-100 text-primary">
-          <Sprout className="h-7 w-7" />
-        </div>
-        <Logo className="justify-center" showText={true} />
+        <Logo className="justify-center mb-2" showText={true} iconSize="h-14 w-14" imageWidth={56} imageHeight={56} />
         <h1 className="mt-3 text-2xl font-bold text-gray-900">Welcome back!</h1>
         <p className="mt-2 text-sm text-gray-600">
           Sign in to your AgriPulse account

@@ -13,10 +13,23 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
+  const role = searchParams.get("role");
   const page = parseInt(searchParams.get("page") || "1");
   const limit = 20;
 
-  const where: any = { buyerId: user.id };
+  let where: any;
+
+  if (role === "farmer") {
+    // Farmer fetching orders that contain their products
+    const farmer = await db.farmer.findUnique({ where: { userId: user.id } });
+    if (!farmer) {
+      return NextResponse.json({ success: true, data: [], meta: { page: 1, limit, total: 0, totalPages: 0 } });
+    }
+    where = { items: { some: { farmerId: farmer.id } } };
+  } else {
+    where = { buyerId: user.id };
+  }
+
   if (status) where.status = status;
 
   const [orders, total] = await Promise.all([
@@ -27,6 +40,7 @@ export async function GET(request: NextRequest) {
           include: { product: { include: { images: { take: 1 } } } },
         },
         address: true,
+        buyer: { select: { id: true, firstName: true, lastName: true } },
       },
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,

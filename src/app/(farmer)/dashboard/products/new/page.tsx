@@ -122,19 +122,19 @@ export default function AddProductPage() {
           const ext = file.name.split(".").pop() || "jpg";
           const filePath = `${farmer.id}/${product.id}/${i}.${ext}`;
 
-          const { error: uploadErr } = await supabase.storage
-            .from("products")
-            .upload(filePath, file, { cacheControl: "3600", upsert: true });
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("bucket", "products");
+          formData.append("path", filePath);
 
-          if (!uploadErr) {
-            const { data: urlData } = supabase.storage
-              .from("products")
-              .getPublicUrl(filePath);
+          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          const uploadData = await uploadRes.json();
 
+          if (uploadRes.ok && uploadData.url) {
             await supabase.from("product_images").insert({
               product_id: product.id,
-              image_url: urlData.publicUrl,
-              thumbnail_url: urlData.publicUrl,
+              image_url: uploadData.url,
+              thumbnail_url: uploadData.url,
               is_primary: i === 0,
               sort_order: i,
             });
