@@ -74,7 +74,7 @@ export default async function MarketplacePage() {
       province: p.farmer.province,
       verificationStatus: p.farmer.verification_status,
       ratingAverage: Number(p.farmer.rating_average || 0),
-    } : null,
+    } : undefined,
   }));
 
   return (

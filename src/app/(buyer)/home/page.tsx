@@ -63,7 +63,7 @@ export default async function HomePage() {
       farmName: p.farmer.farm_name,
       province: p.farmer.province,
       verificationStatus: p.farmer.verification_status,
-    } : null,
+    } : undefined,
   }));
 
   const transformedCategories = (categories ?? []).map((cat: any) => ({
