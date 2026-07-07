@@ -94,8 +94,8 @@ export interface Product {
   viewCount: number;
   createdAt: string;
   images?: ProductImage[];
-  farmer?: Farmer;
-  category?: Category;
+  farmer?: Partial<Farmer>;
+  category?: Partial<Category>;
 }
 
 export interface ProductImage {
