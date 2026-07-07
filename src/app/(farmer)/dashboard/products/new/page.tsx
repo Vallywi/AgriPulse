@@ -77,62 +77,40 @@ export default function AddProductPage() {
     setLoading(true);
 
     try {
-      // Get current user's farmer profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please sign in");
-        return;
-      }
+      // Create the product via the API route. This auto-creates the farmer
+      // profile server-side if missing, so no log out / log in is needed.
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          description,
+          price: parseFloat(price),
+          unit,
+          availableQuantity: parseInt(quantity),
+          minimumOrder: parseInt(minimumOrder) || 1,
+          categoryId,
+          isOrganic,
+        }),
+      });
 
-      let { data: farmer } = await supabase
-        .from("farmers")
-        .select("id")
-        .eq("user_id", user.id)
-        .single();
+      const data = await res.json();
 
-      // If no farmer profile exists yet, create one via sync-user, then retry
-      if (!farmer) {
-        await fetch("/api/auth/sync-user", { method: "POST" });
-        const retry = await supabase
-          .from("farmers")
-          .select("id")
-          .eq("user_id", user.id)
-          .single();
-        farmer = retry.data;
-      }
-
-      if (!farmer) {
-        toast.error("Could not find or create your farmer profile. Please try signing out and back in.");
+      if (!res.ok || !data.success) {
+        toast.error(data.error || "Failed to create product");
         setLoading(false);
         return;
       }
 
-      // Create product
-      const { data: product, error } = await supabase.from("products").insert({
-        name,
-        description,
-        price: parseFloat(price),
-        unit,
-        available_quantity: parseInt(quantity),
-        minimum_order: parseInt(minimumOrder) || 1,
-        category_id: categoryId,
-        farmer_id: farmer.id,
-        is_organic: isOrganic,
-        is_active: true,
-      }).select("id").single();
-
-      if (error || !product) {
-        toast.error(error?.message || "Failed to create product");
-        setLoading(false);
-        return;
-      }
+      const product = data.data;
+      const farmerId = product.farmerId ?? product.farmer?.id;
 
       // Upload images if any
-      if (images.length > 0) {
+      if (images.length > 0 && farmerId) {
         for (let i = 0; i < images.length; i++) {
           const file = images[i].file;
           const ext = file.name.split(".").pop() || "jpg";
-          const filePath = `${farmer.id}/${product.id}/${i}.${ext}`;
+          const filePath = `${farmerId}/${product.id}/${i}.${ext}`;
 
           const formData = new FormData();
           formData.append("file", file);

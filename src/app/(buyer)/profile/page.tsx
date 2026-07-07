@@ -21,6 +21,13 @@ export default async function ProfilePage() {
     .eq("id", user.id)
     .single();
 
+  const { data: address } = await supabase
+    .from("addresses")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("is_default", true)
+    .maybeSingle();
+
   // Fallback to auth user data if the DB profile row doesn't exist yet,
   // so authenticated users always see their profile and the Sign Out button.
   const meta = user.user_metadata || {};
@@ -33,5 +40,5 @@ export default async function ProfilePage() {
     role: meta.role || "consumer",
   };
 
-  return <ProfileContent user={resolvedProfile as any} />;
+  return <ProfileContent user={resolvedProfile as any} address={address ?? null} />;
 }

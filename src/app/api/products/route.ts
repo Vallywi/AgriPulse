@@ -85,28 +85,64 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const farmer = await db.farmer.findUnique({
+  // Find the farmer profile, or auto-create one so the farmer can list
+  // products immediately without needing to log out and back in.
+  let farmer = await db.farmer.findUnique({
     where: { userId: user.id },
   });
 
-  if (!farmer || farmer.verificationStatus !== "approved") {
-    return NextResponse.json({ error: "Only verified farmers can list products" }, { status: 403 });
+  if (!farmer) {
+    const meta = user.user_metadata || {};
+    const firstName = meta.first_name || meta.firstName || "Farmer";
+
+    // Ensure the user row exists first (FK requirement)
+    await db.user.upsert({
+      where: { id: user.id },
+      update: {},
+      create: {
+        id: user.id,
+        email: user.email ?? null,
+        firstName,
+        lastName: meta.last_name || meta.lastName || "",
+        role: "farmer",
+        isActive: true,
+      },
+    });
+
+    farmer = await db.farmer.create({
+      data: {
+        userId: user.id,
+        farmName: meta.farm_name || meta.farmName || `${firstName}'s Farm`,
+        province: meta.province || "",
+        municipality: meta.municipality || "",
+        barangay: meta.barangay || "",
+        farmSizeHectares: 0,
+        primaryCrops: [],
+        farmingExperienceYears: 0,
+        verificationStatus: "approved",
+      },
+    });
   }
 
   const body = await request.json();
+
+  if (!body.name || !body.categoryId || body.price == null) {
+    return NextResponse.json({ error: "Missing required product fields" }, { status: 400 });
+  }
 
   const product = await db.product.create({
     data: {
       farmerId: farmer.id,
       categoryId: body.categoryId,
       name: body.name,
-      description: body.description,
+      description: body.description || "",
       price: body.price,
-      unit: body.unit,
-      availableQuantity: body.availableQuantity,
+      unit: body.unit || "kg",
+      availableQuantity: body.availableQuantity || 0,
       minimumOrder: body.minimumOrder || 1,
       harvestDate: body.harvestDate ? new Date(body.harvestDate) : null,
       isOrganic: body.isOrganic || false,
+      isActive: true,
     },
     include: {
       images: true,

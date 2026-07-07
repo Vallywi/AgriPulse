@@ -13,6 +13,7 @@ import type { User as UserType } from "@/types";
 
 interface ProfileContentProps {
   user: UserType | null;
+  address?: any;
 }
 
 const MENU_ITEMS = [
@@ -23,7 +24,7 @@ const MENU_ITEMS = [
   { icon: HelpCircle, label: "Help & Support", href: "/help" },
 ];
 
-export function ProfileContent({ user }: ProfileContentProps) {
+export function ProfileContent({ user, address }: ProfileContentProps) {
   const router = useRouter();
   const supabase = createClient();
   const [isEditing, setIsEditing] = useState(false);
@@ -32,6 +33,13 @@ export function ProfileContent({ user }: ProfileContentProps) {
   const [saving, setSaving] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Address fields
+  const [streetAddress, setStreetAddress] = useState(address?.street_address || address?.streetAddress || "");
+  const [barangay, setBarangay] = useState(address?.barangay || "");
+  const [municipality, setMunicipality] = useState(address?.municipality || "");
+  const [province, setProvince] = useState(address?.province || "");
+  const [phone, setPhone] = useState(address?.phone || "");
 
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -84,7 +92,17 @@ export function ProfileContent({ user }: ProfileContentProps) {
       const res = await fetch("/api/users/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ firstName, lastName }),
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          address: {
+            streetAddress,
+            barangay,
+            municipality,
+            province,
+            phone,
+          },
+        }),
       });
 
       if (res.ok) {
@@ -144,7 +162,7 @@ export function ProfileContent({ user }: ProfileContentProps) {
         </div>
 
         {isEditing ? (
-          <div className="mt-4 w-full max-w-xs space-y-3">
+          <div className="mt-4 w-full max-w-sm space-y-3 text-left">
             <div className="grid grid-cols-2 gap-2">
               <Input
                 placeholder="First Name"
@@ -157,6 +175,34 @@ export function ProfileContent({ user }: ProfileContentProps) {
                 onChange={(e) => setLastName(e.target.value)}
               />
             </div>
+            <Input
+              placeholder="Phone number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+            />
+            <p className="pt-1 text-xs font-semibold text-gray-500">Delivery Address</p>
+            <Input
+              placeholder="Street / House No."
+              value={streetAddress}
+              onChange={(e) => setStreetAddress(e.target.value)}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                placeholder="Barangay"
+                value={barangay}
+                onChange={(e) => setBarangay(e.target.value)}
+              />
+              <Input
+                placeholder="Municipality/City"
+                value={municipality}
+                onChange={(e) => setMunicipality(e.target.value)}
+              />
+            </div>
+            <Input
+              placeholder="Province"
+              value={province}
+              onChange={(e) => setProvince(e.target.value)}
+            />
             <div className="flex gap-2">
               <Button size="sm" className="flex-1" onClick={handleSaveProfile} loading={saving}>
                 Save
@@ -172,6 +218,12 @@ export function ProfileContent({ user }: ProfileContentProps) {
               {user.firstName} {user.lastName}
             </h2>
             <p className="text-sm text-gray-500">{user.email}</p>
+            {(streetAddress || municipality || province) && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                <MapPin className="h-3 w-3" />
+                {[streetAddress, barangay, municipality, province].filter(Boolean).join(", ")}
+              </p>
+            )}
             <button
               onClick={() => setIsEditing(true)}
               className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"

@@ -52,17 +52,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from auth pages
-  const authPaths = ["/login", "/register"];
-  const isAuthPath = authPaths.some((path) =>
-    request.nextUrl.pathname.startsWith(path)
-  );
-
-  if (isAuthPath && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/marketplace";
-    return NextResponse.redirect(url);
-  }
+  // NOTE: We intentionally do NOT redirect authenticated users away from
+  // /login and /register. This keeps the auth pages always reachable so the
+  // user can switch accounts or sign in again without being bounced to the
+  // marketplace. Post-login navigation is handled by the pages themselves.
 
   return supabaseResponse;
 }
