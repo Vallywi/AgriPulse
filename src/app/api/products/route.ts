@@ -78,77 +78,89 @@ export async function GET(request: NextRequest) {
 
 // POST /api/products — Create product (farmer only)
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+    if (!user) {
+      return NextResponse.json({ error: "Please sign in to add a product" }, { status: 401 });
+    }
 
-  // Find the farmer profile, or auto-create one so the farmer can list
-  // products immediately without needing to log out and back in.
-  let farmer = await db.farmer.findUnique({
-    where: { userId: user.id },
-  });
+    const body = await request.json();
 
-  if (!farmer) {
-    const meta = user.user_metadata || {};
-    const firstName = meta.first_name || meta.firstName || "Farmer";
+    if (!body.name || !body.categoryId || body.price == null) {
+      return NextResponse.json({ error: "Please fill in product name, category, and price" }, { status: 400 });
+    }
 
-    // Ensure the user row exists first (FK requirement)
-    await db.user.upsert({
-      where: { id: user.id },
-      update: {},
-      create: {
-        id: user.id,
-        email: user.email ?? null,
-        firstName,
-        lastName: meta.last_name || meta.lastName || "",
-        role: "farmer",
+    // Validate the category exists (avoids a foreign-key error)
+    const category = await db.category.findUnique({ where: { id: body.categoryId } });
+    if (!category) {
+      return NextResponse.json({ error: "Selected category is invalid. Please pick a category." }, { status: 400 });
+    }
+
+    // Find the farmer profile, or auto-create one so the farmer can list
+    // products immediately without needing to log out and back in.
+    let farmer = await db.farmer.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!farmer) {
+      const meta = user.user_metadata || {};
+      const firstName = meta.first_name || meta.firstName || "Farmer";
+
+      // Ensure the user row exists first (FK requirement)
+      await db.user.upsert({
+        where: { id: user.id },
+        update: {},
+        create: {
+          id: user.id,
+          email: user.email ?? null,
+          firstName,
+          lastName: meta.last_name || meta.lastName || "",
+          role: "farmer",
+          isActive: true,
+        },
+      });
+
+      farmer = await db.farmer.create({
+        data: {
+          userId: user.id,
+          farmName: meta.farm_name || meta.farmName || `${firstName}'s Farm`,
+          province: meta.province || "",
+          municipality: meta.municipality || "",
+          barangay: meta.barangay || "",
+          farmSizeHectares: 0,
+          primaryCrops: [],
+          farmingExperienceYears: 0,
+          verificationStatus: "approved",
+        },
+      });
+    }
+
+    const product = await db.product.create({
+      data: {
+        farmerId: farmer.id,
+        categoryId: body.categoryId,
+        name: body.name,
+        description: body.description || "",
+        price: body.price,
+        unit: body.unit || "kg",
+        availableQuantity: body.availableQuantity || 0,
+        minimumOrder: body.minimumOrder || 1,
+        harvestDate: body.harvestDate ? new Date(body.harvestDate) : null,
+        isOrganic: body.isOrganic || false,
         isActive: true,
       },
-    });
-
-    farmer = await db.farmer.create({
-      data: {
-        userId: user.id,
-        farmName: meta.farm_name || meta.farmName || `${firstName}'s Farm`,
-        province: meta.province || "",
-        municipality: meta.municipality || "",
-        barangay: meta.barangay || "",
-        farmSizeHectares: 0,
-        primaryCrops: [],
-        farmingExperienceYears: 0,
-        verificationStatus: "approved",
+      include: {
+        images: true,
+        farmer: { select: { id: true, farmName: true, province: true } },
       },
     });
+
+    return NextResponse.json({ success: true, data: product }, { status: 201 });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to create product";
+    console.error("Error creating product:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const body = await request.json();
-
-  if (!body.name || !body.categoryId || body.price == null) {
-    return NextResponse.json({ error: "Missing required product fields" }, { status: 400 });
-  }
-
-  const product = await db.product.create({
-    data: {
-      farmerId: farmer.id,
-      categoryId: body.categoryId,
-      name: body.name,
-      description: body.description || "",
-      price: body.price,
-      unit: body.unit || "kg",
-      availableQuantity: body.availableQuantity || 0,
-      minimumOrder: body.minimumOrder || 1,
-      harvestDate: body.harvestDate ? new Date(body.harvestDate) : null,
-      isOrganic: body.isOrganic || false,
-      isActive: true,
-    },
-    include: {
-      images: true,
-      farmer: { select: { id: true, farmName: true, province: true } },
-    },
-  });
-
-  return NextResponse.json({ success: true, data: product }, { status: 201 });
 }

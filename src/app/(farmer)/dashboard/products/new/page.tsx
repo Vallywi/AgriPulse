@@ -94,10 +94,15 @@ export default function AddProductPage() {
         }),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
 
-      if (!res.ok || !data.success) {
-        toast.error(data.error || "Failed to create product");
+      if (!res.ok || !data?.success) {
+        toast.error(data?.error || `Failed to create product (status ${res.status})`);
         setLoading(false);
         return;
       }
