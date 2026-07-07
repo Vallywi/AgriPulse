@@ -55,6 +55,12 @@ export default function RegisterPage() {
   const [passwordError, setPasswordError] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  // Farmer-specific fields
+  const [farmName, setFarmName] = useState("");
+  const [province, setProvince] = useState("");
+  const [municipality, setMunicipality] = useState("");
+  const [barangay, setBarangay] = useState("");
+
   // Countdown timer for resend throttle
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -76,6 +82,10 @@ export default function RegisterPage() {
           role,
           age: age ? parseInt(age) : null,
           gender: gender || null,
+          farm_name: role === "farmer" ? farmName : null,
+          province: role === "farmer" ? province : null,
+          municipality: role === "farmer" ? municipality : null,
+          barangay: role === "farmer" ? barangay : null,
         },
       },
     });
@@ -86,7 +96,7 @@ export default function RegisterPage() {
     }
 
     return { error, autoConfirmed: false };
-  }, [supabase, email, password, firstName, lastName, role, age, gender]);
+  }, [supabase, email, password, firstName, lastName, role, age, gender, farmName, province, municipality, barangay]);
 
   async function handleSubmitDetails(e: React.FormEvent) {
     e.preventDefault();
@@ -106,6 +116,13 @@ export default function RegisterPage() {
     if (password !== confirmPassword) {
       setPasswordError("Passwords do not match");
       return;
+    }
+
+    if (role === "farmer") {
+      if (!farmName.trim() || !province.trim() || !municipality.trim() || !barangay.trim()) {
+        toast.error("Please fill in your farm name and complete location details");
+        return;
+      }
     }
 
     setLoading(true);
@@ -275,6 +292,51 @@ export default function RegisterPage() {
                 </select>
               </div>
             </div>
+
+            {/* Farmer-specific farm & location details */}
+            {role === "farmer" && (
+              <div className="space-y-4 rounded-xl border border-green-100 bg-green-50/50 p-4">
+                <p className="text-sm font-semibold text-green-800">Farm Details</p>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-700">Farm Name *</label>
+                  <Input
+                    placeholder="e.g. Santos Organic Farm"
+                    value={farmName}
+                    onChange={(e) => setFarmName(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-700">Province *</label>
+                  <Input
+                    placeholder="e.g. Benguet"
+                    value={province}
+                    onChange={(e) => setProvince(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Municipality/City *</label>
+                    <Input
+                      placeholder="e.g. La Trinidad"
+                      value={municipality}
+                      onChange={(e) => setMunicipality(e.target.value)}
+                      maxLength={100}
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-gray-700">Barangay *</label>
+                    <Input
+                      placeholder="e.g. Balili"
+                      value={barangay}
+                      onChange={(e) => setBarangay(e.target.value)}
+                      maxLength={100}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             <div>
               <label className="mb-1.5 block text-xs font-medium text-gray-700">Password</label>
               <div className="relative">

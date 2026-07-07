@@ -84,14 +84,26 @@ export default function AddProductPage() {
         return;
       }
 
-      const { data: farmer } = await supabase
+      let { data: farmer } = await supabase
         .from("farmers")
         .select("id")
         .eq("user_id", user.id)
         .single();
 
+      // If no farmer profile exists yet, create one via sync-user, then retry
       if (!farmer) {
-        toast.error("Farmer profile not found. Please complete your farmer registration.");
+        await fetch("/api/auth/sync-user", { method: "POST" });
+        const retry = await supabase
+          .from("farmers")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+        farmer = retry.data;
+      }
+
+      if (!farmer) {
+        toast.error("Could not find or create your farmer profile. Please try signing out and back in.");
+        setLoading(false);
         return;
       }
 

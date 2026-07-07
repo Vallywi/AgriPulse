@@ -50,6 +50,46 @@ export async function POST() {
       },
     });
 
+    // If the user is a farmer, ensure a farmer profile exists
+    if (role === "farmer") {
+      const farmName = metadata.farm_name || metadata.farmName || `${firstName}'s Farm`;
+      const province = metadata.province || "";
+      const municipality = metadata.municipality || "";
+      const barangay = metadata.barangay || "";
+
+      const existingFarmer = await prisma.farmer.findUnique({
+        where: { userId: user.id },
+      });
+
+      if (!existingFarmer) {
+        await prisma.farmer.create({
+          data: {
+            userId: user.id,
+            farmName,
+            province,
+            municipality,
+            barangay,
+            farmSizeHectares: 0,
+            primaryCrops: [],
+            farmingExperienceYears: 0,
+            // Auto-approve so farmers can list products immediately
+            verificationStatus: "approved",
+          },
+        });
+      } else {
+        // Update location details if provided
+        await prisma.farmer.update({
+          where: { userId: user.id },
+          data: {
+            ...(farmName && { farmName }),
+            ...(province && { province }),
+            ...(municipality && { municipality }),
+            ...(barangay && { barangay }),
+          },
+        });
+      }
+    }
+
     return NextResponse.json({ user: dbUser });
   } catch (error) {
     console.error("Error syncing user:", error);
