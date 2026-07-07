@@ -70,9 +70,18 @@ export default function LoginPage() {
     }
 
     if (data.user) {
-      // Sync user to database (creates record if missing)
-      await fetch("/api/auth/sync-user", { method: "POST" });
-      const role = data.user.user_metadata?.role;
+      // Sync user to database (creates record if missing) and get the canonical role
+      let role = data.user.user_metadata?.role;
+      try {
+        const syncRes = await fetch("/api/auth/sync-user", { method: "POST" });
+        const syncData = await syncRes.json();
+        if (syncData?.user?.role) {
+          role = syncData.user.role;
+        }
+      } catch {
+        // fall back to metadata role
+      }
+
       toast.success("Welcome back!");
       router.push(role === "farmer" ? "/dashboard" : "/marketplace");
       router.refresh();
