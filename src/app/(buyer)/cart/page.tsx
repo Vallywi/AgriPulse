@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useCartStore } from "@/store/cart-store";
@@ -17,7 +17,7 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <EmptyState
-        icon="🛒"
+        icon={ShoppingCart}
         title="Your cart is empty"
         description="Browse the marketplace to add fresh produce to your cart."
         actionLabel="Browse Produce"
@@ -38,14 +38,14 @@ export default function CartPage() {
       {/* Cart items */}
       <div className="space-y-3">
         {items.map((item) => {
-          const image = item.product.images?.[0]?.thumbnailUrl || "/placeholder-product.png";
+          const image = item.product.images?.[0]?.thumbnailUrl || "/placeholder-product.svg";
           return (
             <div
               key={item.id}
               className="flex gap-3 rounded-2xl border bg-white p-3"
             >
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-gray-50">
-                <Image src={image} alt={item.product.name} fill className="object-cover" sizes="80px" />
+                <Image src={image} alt={item.product.name} fill unoptimized className="object-cover" sizes="80px" />
               </div>
               <div className="flex flex-1 flex-col justify-between">
                 <div>

@@ -1,2 +1,5 @@
 {
+    "typescript.autoClosingTags": false,
+    "css.customData": [],
+    "css.lint.unknownAtRules": "ignore"
 }

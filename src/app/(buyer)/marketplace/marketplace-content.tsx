@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { Search } from "lucide-react";
+import {
+  Search,
+  SearchX,
+  LayoutGrid,
+  Leaf,
+  Apple,
+  Wheat,
+  Carrot,
+  Drumstick,
+  Fish,
+  Flower2,
+  Egg,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ProductCard } from "@/components/product-card";
 import { ProductCardSkeleton } from "@/components/ui/skeleton";
@@ -10,6 +22,17 @@ import { useCartStore } from "@/store/cart-store";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { Product, Category } from "@/types";
+
+const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  vegetables: Leaf,
+  fruits: Apple,
+  "rice-grains": Wheat,
+  "root-crops": Carrot,
+  "poultry-meat": Drumstick,
+  seafood: Fish,
+  "herbs-spices": Flower2,
+  "dairy-eggs": Egg,
+};
 
 interface MarketplaceContentProps {
   categories: Category[];
@@ -36,9 +59,9 @@ export function MarketplaceContent({ categories, initialProducts }: MarketplaceC
   return (
     <div className="container px-4 py-4 space-y-4">
       {/* Header */}
-      <div>
+      <div className="rounded-lg bg-gradient-to-r from-green-50 via-emerald-50 to-teal-50 p-4 shadow-md">
         <h1 className="text-xl font-bold text-gray-900">Fresh Produce</h1>
-        <p className="text-sm text-gray-500">From verified Filipino farmers</p>
+        <p className="text-sm text-gray-600">From verified Filipino farmers</p>
       </div>
 
       {/* Search */}
@@ -57,44 +80,61 @@ export function MarketplaceContent({ categories, initialProducts }: MarketplaceC
         <button
           onClick={() => setSelectedCategory(null)}
           className={cn(
-            "shrink-0 rounded-full px-4 py-2 text-xs font-medium transition-colors",
+            "shrink-0 rounded-full px-4 py-2 text-xs font-medium transition-all duration-200 ease-in-out inline-flex items-center gap-1.5",
             !selectedCategory
               ? "bg-primary text-white"
               : "bg-gray-100 text-gray-600 hover:bg-gray-200"
           )}
         >
+          <LayoutGrid className={cn(
+            "h-4 w-4 transition-all duration-200 ease-in-out",
+            !selectedCategory ? "opacity-100 scale-110" : "opacity-70 scale-100"
+          )} />
           All
         </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className={cn(
-              "shrink-0 rounded-full px-4 py-2 text-xs font-medium transition-colors",
-              selectedCategory === cat.id
-                ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-            )}
-          >
-            {cat.name}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const Icon = CATEGORY_ICONS[cat.slug];
+          const isSelected = selectedCategory === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className={cn(
+                "shrink-0 rounded-full px-4 py-2 text-xs font-medium transition-all duration-200 ease-in-out inline-flex items-center gap-1.5",
+                isSelected
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              )}
+            >
+              {Icon && <Icon className={cn(
+                "h-4 w-4 transition-all duration-200 ease-in-out",
+                isSelected ? "opacity-100 scale-110" : "opacity-70 scale-100"
+              )} />}
+              {cat.name}
+            </button>
+          );
+        })}
       </div>
 
       {/* Product Grid */}
       {filteredProducts.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {filteredProducts.map((product) => (
-            <ProductCard
+          {filteredProducts.map((product, index) => (
+            <div
               key={product.id}
-              product={product}
-              onAddToCart={() => handleAddToCart(product)}
-            />
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${index * 75}ms`, opacity: 0 }}
+            >
+              <ProductCard
+                product={product}
+                onAddToCart={() => handleAddToCart(product)}
+              />
+            </div>
           ))}
         </div>
       ) : (
         <EmptyState
-          icon="🔍"
+          icon={SearchX}
           title="No products found"
           description="Try adjusting your search or browse a different category."
         />

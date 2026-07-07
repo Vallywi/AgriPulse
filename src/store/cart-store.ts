@@ -30,10 +30,13 @@ export const useCartStore = create<CartState>()(
             ),
           });
         } else {
+          const id = typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2) + Date.now().toString(36);
           set({
             items: [
               ...items,
-              { id: crypto.randomUUID(), product, quantity },
+              { id, product, quantity },
             ],
           });
         }
@@ -61,7 +64,7 @@ export const useCartStore = create<CartState>()(
 
       getSubtotal: () =>
         get().items.reduce(
-          (sum, item) => sum + item.product.price * item.quantity,
+          (sum, item) => sum + Number(item.product.price) * item.quantity,
           0
         ),
     }),

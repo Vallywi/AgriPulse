@@ -1,7 +1,7 @@
 import { Button } from "./button";
 
 interface EmptyStateProps {
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   title: string;
   description: string;
   actionLabel?: string;
@@ -10,7 +10,7 @@ interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon,
+  icon: Icon,
   title,
   description,
   actionLabel,
@@ -19,7 +19,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-      <span className="mb-4 text-5xl">{icon}</span>
+      <Icon className="mb-4 h-10 w-10 text-gray-400" />
       <h3 className="mb-2 text-lg font-semibold text-gray-900">{title}</h3>
       <p className="mb-6 max-w-xs text-sm text-gray-500">{description}</p>
       {actionLabel && (

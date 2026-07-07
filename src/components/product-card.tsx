@@ -15,10 +15,10 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart, className }: ProductCardProps) {
   const primaryImage = product.images?.find((img) => img.isPrimary) ?? product.images?.[0];
-  const imageUrl = primaryImage?.thumbnailUrl || "/placeholder-product.png";
+  const imageUrl = primaryImage?.thumbnailUrl || primaryImage?.imageUrl || "/placeholder-product.svg";
 
   return (
-    <div className={cn("group relative rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md", className)}>
+    <div className={cn("group relative rounded-2xl border bg-card shadow-md transition-all duration-150 ease-in-out hover:shadow-lg hover:scale-[1.02] active:scale-95", className)}>
       {/* Image */}
       <Link href={`/marketplace/${product.id}`} className="block">
         <div className="relative aspect-square overflow-hidden rounded-t-2xl bg-gray-50">
@@ -26,6 +26,7 @@ export function ProductCard({ product, onAddToCart, className }: ProductCardProp
             src={imageUrl}
             alt={product.name}
             fill
+            unoptimized
             className="object-cover transition-transform group-hover:scale-105"
             sizes="(max-width: 768px) 50vw, 33vw"
           />
@@ -52,7 +53,7 @@ export function ProductCard({ product, onAddToCart, className }: ProductCardProp
       </button>
 
       {/* Content */}
-      <div className="p-3">
+      <div className="p-4">
         <Link href={`/marketplace/${product.id}`}>
           <h3 className="line-clamp-2 text-sm font-medium text-gray-900">{product.name}</h3>
         </Link>
@@ -88,7 +89,7 @@ export function ProductCard({ product, onAddToCart, className }: ProductCardProp
         {onAddToCart && (
           <button
             onClick={onAddToCart}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-50 py-2 text-xs font-medium text-primary transition-colors hover:bg-primary-100 active:scale-[0.97]"
+            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-50 py-2 text-xs font-medium text-primary transition-all duration-150 ease-in-out hover:bg-primary-100 hover:scale-[1.02] active:scale-95"
           >
             <ShoppingCart className="h-3.5 w-3.5" />
             Add to Cart

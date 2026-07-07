@@ -1,15 +1,28 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { MarketplaceContent } from "./marketplace-content";
+import { HomeContent } from "./home-content";
 
 export const metadata: Metadata = {
-  title: "Marketplace",
-  description: "Browse fresh farm produce from verified Filipino farmers",
+  title: "Home - AgriPulse",
 };
 
-export default async function MarketplacePage() {
+export default async function HomePage() {
   const supabase = await createClient();
 
+  // Fetch featured products
+  const { data: featured } = await supabase
+    .from("products")
+    .select(`
+      *,
+      images:product_images(*),
+      farmer:farmers(id, farm_name, province, verification_status)
+    `)
+    .eq("is_active", true)
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false })
+    .limit(6);
+
+  // Fetch categories
   const { data: categories } = await supabase
     .from("categories")
     .select("*")
@@ -17,31 +30,8 @@ export default async function MarketplacePage() {
     .eq("is_active", true)
     .order("sort_order");
 
-  const { data: products } = await supabase
-    .from("products")
-    .select(`
-      *,
-      images:product_images(*),
-      farmer:farmers(id, farm_name, province, verification_status, rating_average)
-    `)
-    .eq("is_active", true)
-    .is("deleted_at", null)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
-  // Transform snake_case from Supabase to camelCase for frontend
-  const transformedCategories = (categories ?? []).map((cat: any) => ({
-    id: cat.id,
-    parentId: cat.parent_id,
-    name: cat.name,
-    slug: cat.slug,
-    description: cat.description,
-    iconUrl: cat.icon_url,
-    sortOrder: cat.sort_order,
-    isActive: cat.is_active,
-  }));
-
-  const transformedProducts = (products ?? []).map((p: any) => ({
+  // Transform data
+  const transformedProducts = (featured ?? []).map((p: any) => ({
     id: p.id,
     farmerId: p.farmer_id,
     categoryId: p.category_id,
@@ -73,14 +63,15 @@ export default async function MarketplacePage() {
       farmName: p.farmer.farm_name,
       province: p.farmer.province,
       verificationStatus: p.farmer.verification_status,
-      ratingAverage: Number(p.farmer.rating_average || 0),
     } : null,
   }));
 
-  return (
-    <MarketplaceContent
-      categories={transformedCategories}
-      initialProducts={transformedProducts}
-    />
-  );
+  const transformedCategories = (categories ?? []).map((cat: any) => ({
+    id: cat.id,
+    name: cat.name,
+    slug: cat.slug,
+    sortOrder: cat.sort_order,
+  }));
+
+  return <HomeContent featuredProducts={transformedProducts} categories={transformedCategories} />;
 }

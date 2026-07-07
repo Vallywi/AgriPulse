@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="#E8F5E9" />
+  <circle cx="100" cy="100" r="80" fill="#C8E6C9" opacity="0.5" />
+  
+  <!-- Leaf/sprout shape -->
+  <path d="M100 40 C60 60, 50 100, 80 130 C90 140, 95 145, 100 160" stroke="#2E7D32" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M100 40 C140 60, 150 100, 120 130 C110 140, 105 145, 100 160" stroke="#2E7D32" stroke-width="6" stroke-linecap="round" fill="none"/>
+  
+  <!-- Central stem -->
+  <path d="M100 80 L100 160" stroke="#2E7D32" stroke-width="5" stroke-linecap="round"/>
+  
+  <!-- Left leaf -->
+  <path d="M100 95 C75 85, 60 95, 65 110 C68 120, 85 115, 100 105" fill="#4CAF50" opacity="0.8"/>
+  
+  <!-- Right leaf -->
+  <path d="M100 110 C125 100, 140 110, 135 125 C132 135, 115 130, 100 120" fill="#66BB6A" opacity="0.8"/>
+  
+  <!-- Pulse/heartbeat line -->
+  <path d="M40 100 L70 100 L80 85 L90 115 L100 90 L110 110 L120 95 L130 100 L160 100" stroke="#388E3C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.6"/>
+</svg>

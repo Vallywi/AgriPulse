@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -87,7 +88,7 @@ export function OrdersList({ orders }: OrdersListProps) {
         </div>
       ) : (
         <EmptyState
-          icon="📦"
+          icon={Package}
           title="No orders yet"
           description="When you place an order, it will appear here."
           actionLabel="Start Shopping"

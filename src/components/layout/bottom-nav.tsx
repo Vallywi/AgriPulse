@@ -7,8 +7,8 @@ import { cn } from "@/lib/utils";
 import { useCartStore } from "@/store/cart-store";
 
 const NAV_ITEMS = [
-  { href: "/marketplace", label: "Home", icon: Home },
-  { href: "/marketplace/browse", label: "Shop", icon: ShoppingBag },
+  { href: "/home", label: "Home", icon: Home },
+  { href: "/marketplace", label: "Shop", icon: ShoppingBag },
   { href: "/cart", label: "Cart", icon: ShoppingCart, badge: true },
   { href: "/orders", label: "Orders", icon: Package },
   { href: "/profile", label: "Profile", icon: User },
@@ -31,7 +31,7 @@ export function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                "relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-1.5 transition-colors",
+                "relative flex flex-col items-center justify-center gap-0.5 rounded-xl px-3 py-1.5 transition-all duration-200 ease-out",
                 isActive
                   ? "text-primary"
                   : "text-gray-400 hover:text-gray-600"
@@ -46,6 +46,12 @@ export function BottomNav() {
                 )}
               </div>
               <span className="text-[10px] font-medium">{item.label}</span>
+              <span
+                className={cn(
+                  "absolute bottom-0.5 h-1 w-1 rounded-full bg-primary transition-all duration-200 ease-out",
+                  isActive ? "scale-100 opacity-100" : "scale-0 opacity-0"
+                )}
+              />
             </Link>
           );
         })}
