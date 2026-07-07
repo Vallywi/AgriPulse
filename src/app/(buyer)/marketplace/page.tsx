@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { MarketplaceContent } from "./marketplace-content";
+import type { Product } from "@/types";
 
 export const metadata: Metadata = {
   title: "Marketplace",
@@ -80,7 +81,7 @@ export default async function MarketplacePage() {
   return (
     <MarketplaceContent
       categories={transformedCategories}
-      initialProducts={transformedProducts}
+      initialProducts={transformedProducts as Product[]}
     />
   );
 }
