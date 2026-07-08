@@ -123,15 +123,20 @@ export default function AddProductPage() {
           formData.append("path", filePath);
 
           const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-          const uploadData = await uploadRes.json();
+          let uploadData: any = null;
+          try { uploadData = await uploadRes.json(); } catch { /* ignore */ }
 
-          if (uploadRes.ok && uploadData.url) {
-            await supabase.from("product_images").insert({
-              product_id: product.id,
-              image_url: uploadData.url,
-              thumbnail_url: uploadData.url,
-              is_primary: i === 0,
-              sort_order: i,
+          if (uploadRes.ok && uploadData?.url) {
+            // Save the image record to the database via API
+            await fetch("/api/products/" + product.id + "/images", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                imageUrl: uploadData.url,
+                thumbnailUrl: uploadData.url,
+                isPrimary: i === 0,
+                sortOrder: i,
+              }),
             });
           }
         }
