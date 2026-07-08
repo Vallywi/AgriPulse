@@ -2,7 +2,7 @@
   "name": "AgriPulse Marketplace",
   "short_name": "AgriPulse",
   "description": "From Farm to Market, Fair Prices for Every Farmer. Fresh produce directly from Filipino farmers.",
-  "start_url": "/marketplace",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#F8F9FA",
   "theme_color": "#2E7D32",
