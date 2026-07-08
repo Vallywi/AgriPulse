@@ -20,6 +20,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    // Guard: the upload requires the service role key to be configured
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: "Image uploads are not configured on the server (missing SUPABASE_SERVICE_ROLE_KEY)." },
+        { status: 500 }
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const bucket = formData.get("bucket") as string | null;

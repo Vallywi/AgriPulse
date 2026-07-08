@@ -52,28 +52,29 @@ export function FarmerProfileContent({ user }: FarmerProfileContentProps) {
       return;
     }
 
-    toast.loading("Uploading...");
+    const toastId = toast.loading("Uploading photo...");
     const { url, error } = await uploadAvatar(file, user.id);
-    toast.dismiss();
 
-    if (error) {
-      toast.error("Failed to upload: " + error);
+    if (error || !url) {
+      toast.error("Upload failed: " + (error || "unknown error"), { id: toastId });
       return;
     }
 
-    if (url) {
-      const res = await fetch("/api/users/me", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: url }),
-      });
-      if (res.ok) {
-        setAvatarUrl(url);
-        toast.success("Profile photo updated!");
-        router.refresh();
-      } else {
-        toast.error("Failed to save avatar");
-      }
+    const res = await fetch("/api/users/me", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ avatarUrl: url }),
+    });
+
+    let data: any = null;
+    try { data = await res.json(); } catch { /* ignore */ }
+
+    if (res.ok) {
+      setAvatarUrl(url);
+      toast.success("Profile photo updated!", { id: toastId });
+      router.refresh();
+    } else {
+      toast.error(data?.error || "Failed to save photo", { id: toastId });
     }
   }
 
