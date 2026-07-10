@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Search, Package, Edit, ToggleLeft, ToggleRight, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Package, ToggleLeft, ToggleRight, Trash2, Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -31,10 +31,13 @@ export default function ProductManagementPage() {
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const fetchProducts = useCallback(async () => {
+    setLoading(true);
     try {
-      const res = await fetch("/api/products?limit=50&mine=true");
+      const res = await fetch("/api/products?limit=50&mine=true", {
+        cache: "no-store",
+      });
       const data = await res.json();
-      if (data.success) {
+      if (res.ok && data.success) {
         setProducts(data.data.map((p: any) => ({
           id: p.id,
           name: p.name,
@@ -46,6 +49,10 @@ export default function ProductManagementPage() {
           isActive: p.isActive ?? p.is_active ?? true,
           images: p.images ?? [],
         })));
+      } else if (res.status === 401) {
+        toast.error("Please sign in to view your products");
+      } else {
+        toast.error(data.error || "Failed to load products");
       }
     } catch {
       toast.error("Failed to load products");
@@ -119,11 +126,22 @@ export default function ProductManagementPage() {
     <div className="container px-4 py-4 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-gray-900">My Products</h2>
-        <Link href="/dashboard/products/new">
-          <Button size="sm" className="gap-1">
-            <Plus className="h-4 w-4" /> Add
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-1"
+            onClick={() => fetchProducts()}
+            aria-label="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
           </Button>
-        </Link>
+          <Link href="/dashboard/products/new">
+            <Button size="sm" className="gap-1">
+              <Plus className="h-4 w-4" /> Add
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search & Filter */}

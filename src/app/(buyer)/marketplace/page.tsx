@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { MarketplaceContent } from "./marketplace-content";
 import type { Product } from "@/types";
 
+// Always fetch fresh product data so newly-created products appear immediately.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Marketplace",
   description: "Browse fresh farm produce from verified Filipino farmers",

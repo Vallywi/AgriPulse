@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { HomeContent } from "./home-content";
 import type { Product, Category } from "@/types";
 
+// Always fetch fresh so newly-listed farmer products show up right away.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export const metadata: Metadata = {
   title: "Home - AgriPulse",
 };

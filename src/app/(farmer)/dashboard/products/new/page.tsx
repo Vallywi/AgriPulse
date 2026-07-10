@@ -136,6 +136,7 @@ export default function AddProductPage() {
 
       toast.success("Product created successfully!");
       router.push("/dashboard/products");
+      router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
     }

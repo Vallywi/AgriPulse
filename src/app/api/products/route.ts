@@ -23,14 +23,15 @@ export async function GET(request: NextRequest) {
   if (mine === "true") {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const farmer = await db.farmer.findUnique({ where: { userId: user.id } });
-      if (farmer) {
-        where.farmerId = farmer.id;
-      } else {
-        return NextResponse.json({ success: true, data: [], meta: { page: 1, limit, total: 0, totalPages: 0 } });
-      }
+    if (!user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
+    const farmer = await db.farmer.findUnique({ where: { userId: user.id } });
+    if (!farmer) {
+      // No farmer profile yet — return empty list rather than everyone's products.
+      return NextResponse.json({ success: true, data: [], meta: { page: 1, limit, total: 0, totalPages: 0 } });
+    }
+    where.farmerId = farmer.id;
   } else {
     where.isActive = true;
   }
