@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Heart, ShoppingCart, Star, MapPin, Leaf } from "lucide-react";
+import { Heart, ShoppingCart, Star, MapPin, Leaf, Zap } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/types";
@@ -10,12 +10,20 @@ import type { Product } from "@/types";
 interface ProductCardProps {
   product: Product;
   onAddToCart?: () => void;
+  onBuyNow?: () => void;
   className?: string;
 }
 
-export function ProductCard({ product, onAddToCart, className }: ProductCardProps) {
+export function ProductCard({ product, onAddToCart, onBuyNow, className }: ProductCardProps) {
   const primaryImage = product.images?.find((img) => img.isPrimary) ?? product.images?.[0];
   const imageUrl = primaryImage?.thumbnailUrl || primaryImage?.imageUrl || "/placeholder-product.svg";
+
+  // Build a friendly location string: "Municipality, Province" or fall back gracefully
+  const locationParts = [
+    product.farmer?.municipality,
+    product.farmer?.province,
+  ].filter(Boolean);
+  const locationText = locationParts.join(", ");
 
   return (
     <div className={cn("group relative rounded-2xl border bg-card shadow-md transition-all duration-150 ease-in-out hover:shadow-lg hover:scale-[1.02] active:scale-95", className)}>
@@ -76,30 +84,48 @@ export function ProductCard({ product, onAddToCart, className }: ProductCardProp
         )}
 
         {/* Farmer location */}
-        {product.farmer && (
+        {product.farmer && locationText && (
           <div className="mt-1.5 flex items-center gap-1 text-xs text-gray-500">
-            <MapPin className="h-3 w-3" />
-            <span className="truncate">{product.farmer.province}</span>
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{locationText}</span>
             {product.farmer.verificationStatus === "approved" && (
               <span className="ml-auto text-primary" title="Verified Farmer">✓</span>
             )}
           </div>
         )}
 
-        {/* Add to cart */}
-        {onAddToCart && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onAddToCart();
-            }}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-50 py-2 text-xs font-medium text-primary transition-all duration-150 ease-in-out hover:bg-primary-100 hover:scale-[1.02] active:scale-95"
-          >
-            <ShoppingCart className="h-3.5 w-3.5" />
-            Add to Cart
-          </button>
+        {/* Action buttons: Add to Cart + Buy Now */}
+        {(onAddToCart || onBuyNow) && (
+          <div className="mt-2 grid grid-cols-2 gap-1.5">
+            {onAddToCart && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onAddToCart();
+                }}
+                className="flex items-center justify-center gap-1 rounded-xl bg-primary-50 py-2 text-xs font-medium text-primary transition-all duration-150 ease-in-out hover:bg-primary-100 hover:scale-[1.02] active:scale-95"
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+                Add
+              </button>
+            )}
+            {onBuyNow && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onBuyNow();
+                }}
+                className="flex items-center justify-center gap-1 rounded-xl bg-primary py-2 text-xs font-medium text-white transition-all duration-150 ease-in-out hover:bg-primary/90 hover:scale-[1.02] active:scale-95"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                Buy Now
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   SearchX,
@@ -40,6 +41,7 @@ interface MarketplaceContentProps {
 }
 
 export function MarketplaceContent({ categories, initialProducts }: MarketplaceContentProps) {
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const addItem = useCartStore((s) => s.addItem);
@@ -57,6 +59,15 @@ export function MarketplaceContent({ categories, initialProducts }: MarketplaceC
       toast.success(`${product.name} added to cart`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+    }
+  }
+
+  function handleBuyNow(product: Product) {
+    try {
+      addItem(product, Number(product.minimumOrder) || 1);
+      router.push("/checkout");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to proceed to checkout");
     }
   }
 
@@ -132,6 +143,7 @@ export function MarketplaceContent({ categories, initialProducts }: MarketplaceC
               <ProductCard
                 product={product}
                 onAddToCart={() => handleAddToCart(product)}
+                onBuyNow={() => handleBuyNow(product)}
               />
             </div>
           ))}

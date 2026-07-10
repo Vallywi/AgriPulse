@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sparkles, ArrowRight, Leaf, Apple, Wheat, Carrot, Drumstick, Fish, Flower2, Egg } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { useCartStore } from "@/store/cart-store";
@@ -25,11 +26,25 @@ interface HomeContentProps {
 }
 
 export function HomeContent({ featuredProducts, categories }: HomeContentProps) {
+  const router = useRouter();
   const addItem = useCartStore((s) => s.addItem);
 
   function handleAddToCart(product: Product) {
-    addItem(product, Number(product.minimumOrder) || 1);
-    toast.success(`${product.name} added to cart`);
+    try {
+      addItem(product, Number(product.minimumOrder) || 1);
+      toast.success(`${product.name} added to cart`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+    }
+  }
+
+  function handleBuyNow(product: Product) {
+    try {
+      addItem(product, Number(product.minimumOrder) || 1);
+      router.push("/checkout");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to proceed to checkout");
+    }
   }
 
   return (
@@ -106,6 +121,7 @@ export function HomeContent({ featuredProducts, categories }: HomeContentProps) 
                 <ProductCard
                   product={product}
                   onAddToCart={() => handleAddToCart(product)}
+                  onBuyNow={() => handleBuyNow(product)}
                 />
               </div>
             ))}

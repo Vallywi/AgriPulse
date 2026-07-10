@@ -16,7 +16,7 @@ export default async function HomePage() {
     .select(`
       *,
       images:product_images(*),
-      farmer:farmers(id, farm_name, province, verification_status)
+      farmer:farmers(id, farm_name, province, municipality, barangay, verification_status)
     `)
     .eq("is_active", true)
     .is("deleted_at", null)
@@ -63,6 +63,8 @@ export default async function HomePage() {
       id: p.farmer.id,
       farmName: p.farmer.farm_name,
       province: p.farmer.province,
+      municipality: p.farmer.municipality,
+      barangay: p.farmer.barangay,
       verificationStatus: p.farmer.verification_status,
     } : undefined,
   }));
