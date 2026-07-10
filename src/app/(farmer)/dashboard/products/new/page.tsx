@@ -77,8 +77,34 @@ export default function AddProductPage() {
     setLoading(true);
 
     try {
-      // Create the product via the API route. This auto-creates the farmer
-      // profile server-side if missing, so no log out / log in is needed.
+      // Step 1: Upload all images FIRST (so the URLs can be saved with the product atomically)
+      const imageUrls: string[] = [];
+      if (images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+          const file = images[i].file;
+          const ext = file.name.split(".").pop() || "jpg";
+          // Use a temporary path prefix; the storage path doesn't need the product id
+          const filePath = `pending/${Date.now()}-${i}.${ext}`;
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("bucket", "products");
+          formData.append("path", filePath);
+
+          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+          let uploadData: any = null;
+          try { uploadData = await uploadRes.json(); } catch { /* ignore */ }
+
+          if (!uploadRes.ok || !uploadData?.url) {
+            toast.error(uploadData?.error || `Failed to upload image ${i + 1}`);
+            setLoading(false);
+            return;
+          }
+          imageUrls.push(uploadData.url);
+        }
+      }
+
+      // Step 2: Create the product with the image URLs in one atomic call
       const res = await fetch("/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -91,6 +117,7 @@ export default function AddProductPage() {
           minimumOrder: parseInt(minimumOrder) || 1,
           categoryId,
           isOrganic,
+          imageUrls,
         }),
       });
 
@@ -107,45 +134,10 @@ export default function AddProductPage() {
         return;
       }
 
-      const product = data.data;
-      const farmerId = product.farmerId ?? product.farmer?.id;
-
-      // Upload images if any
-      if (images.length > 0 && farmerId) {
-        for (let i = 0; i < images.length; i++) {
-          const file = images[i].file;
-          const ext = file.name.split(".").pop() || "jpg";
-          const filePath = `${farmerId}/${product.id}/${i}.${ext}`;
-
-          const formData = new FormData();
-          formData.append("file", file);
-          formData.append("bucket", "products");
-          formData.append("path", filePath);
-
-          const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
-          let uploadData: any = null;
-          try { uploadData = await uploadRes.json(); } catch { /* ignore */ }
-
-          if (uploadRes.ok && uploadData?.url) {
-            // Save the image record to the database via API
-            await fetch("/api/products/" + product.id + "/images", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                imageUrl: uploadData.url,
-                thumbnailUrl: uploadData.url,
-                isPrimary: i === 0,
-                sortOrder: i,
-              }),
-            });
-          }
-        }
-      }
-
       toast.success("Product created successfully!");
       router.push("/dashboard/products");
     } catch (err) {
-      toast.error("Something went wrong");
+      toast.error(err instanceof Error ? err.message : "Something went wrong");
     }
 
     setLoading(false);

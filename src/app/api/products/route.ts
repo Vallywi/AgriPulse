@@ -137,24 +137,46 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const product = await db.product.create({
-      data: {
-        farmerId: farmer.id,
-        categoryId: body.categoryId,
-        name: body.name,
-        description: body.description || "",
-        price: body.price,
-        unit: body.unit || "kg",
-        availableQuantity: body.availableQuantity || 0,
-        minimumOrder: body.minimumOrder || 1,
-        harvestDate: body.harvestDate ? new Date(body.harvestDate) : null,
-        isOrganic: body.isOrganic || false,
-        isActive: true,
-      },
-      include: {
-        images: true,
-        farmer: { select: { id: true, farmName: true, province: true } },
-      },
+    // Extract image URLs from body (already uploaded by the client)
+    const imageUrls: string[] = Array.isArray(body.imageUrls) ? body.imageUrls.filter((u: any) => typeof u === "string" && u.length > 0) : [];
+
+    // Create the product AND its image records in one atomic transaction.
+    const product = await db.$transaction(async (tx) => {
+      const p = await tx.product.create({
+        data: {
+          farmerId: farmer!.id,
+          categoryId: body.categoryId,
+          name: body.name,
+          description: body.description || "",
+          price: body.price,
+          unit: body.unit || "kg",
+          availableQuantity: body.availableQuantity || 0,
+          minimumOrder: body.minimumOrder || 1,
+          harvestDate: body.harvestDate ? new Date(body.harvestDate) : null,
+          isOrganic: body.isOrganic || false,
+          isActive: true,
+        },
+      });
+
+      if (imageUrls.length > 0) {
+        await tx.productImage.createMany({
+          data: imageUrls.map((url, i) => ({
+            productId: p.id,
+            imageUrl: url,
+            thumbnailUrl: url,
+            isPrimary: i === 0,
+            sortOrder: i,
+          })),
+        });
+      }
+
+      return tx.product.findUnique({
+        where: { id: p.id },
+        include: {
+          images: { orderBy: { sortOrder: "asc" } },
+          farmer: { select: { id: true, farmName: true, province: true } },
+        },
+      });
     });
 
     return NextResponse.json({ success: true, data: product }, { status: 201 });
