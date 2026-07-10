@@ -32,7 +32,7 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
 
   const subtotal = getSubtotal();
-  const deliveryFee = items.length > 0 ? 100 : 0;
+  const deliveryFee = items.length > 0 ? 20 : 0;
   const serviceFee = Math.round(subtotal * 0.02);
   const total = subtotal + deliveryFee + serviceFee;
 

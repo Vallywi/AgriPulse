@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const deliveryFee = 100; // simplified
+  const deliveryFee = 20; // flat delivery fee
   const serviceFee = Math.round(subtotal * 0.03); // 3% service fee
   const totalAmount = subtotal + deliveryFee + serviceFee;
 

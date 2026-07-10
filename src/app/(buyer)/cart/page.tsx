@@ -11,7 +11,7 @@ import { formatCurrency } from "@/lib/utils";
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getSubtotal, clearCart } = useCartStore();
   const subtotal = getSubtotal();
-  const deliveryFee = items.length > 0 ? 100 : 0;
+  const deliveryFee = items.length > 0 ? 20 : 0;
   const total = subtotal + deliveryFee;
 
   if (items.length === 0) {
