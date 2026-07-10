@@ -52,8 +52,12 @@ export function MarketplaceContent({ categories, initialProducts }: MarketplaceC
   });
 
   function handleAddToCart(product: Product) {
-    addItem(product, Number(product.minimumOrder) || 1);
-    toast.success(`${product.name} added to cart`);
+    try {
+      addItem(product, Number(product.minimumOrder) || 1);
+      toast.success(`${product.name} added to cart`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add to cart");
+    }
   }
 
   return (

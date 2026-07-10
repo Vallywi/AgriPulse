@@ -46,6 +46,7 @@ export function ProductCard({ product, onAddToCart, className }: ProductCardProp
 
       {/* Wishlist */}
       <button
+        type="button"
         className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
         aria-label="Add to wishlist"
       >
@@ -88,7 +89,12 @@ export function ProductCard({ product, onAddToCart, className }: ProductCardProp
         {/* Add to cart */}
         {onAddToCart && (
           <button
-            onClick={onAddToCart}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onAddToCart();
+            }}
             className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary-50 py-2 text-xs font-medium text-primary transition-all duration-150 ease-in-out hover:bg-primary-100 hover:scale-[1.02] active:scale-95"
           >
             <ShoppingCart className="h-3.5 w-3.5" />

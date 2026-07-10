@@ -139,6 +139,13 @@ export function ProfileContent({ user, address }: ProfileContentProps) {
     <div className="container px-4 py-6 space-y-6">
       {/* User info with edit */}
       <div className="animate-fade-in-up relative flex flex-col items-center text-center">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleAvatarUpload}
+        />
         {/* Avatar with edit button */}
         <div className="relative">
           <UserAvatar
@@ -146,15 +153,14 @@ export function ProfileContent({ user, address }: ProfileContentProps) {
             imageUrl={avatarUrl}
             className="h-20 w-20 text-lg"
           />
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleAvatarUpload}
-          />
           <button
-            onClick={() => fileInputRef.current?.click()}
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              fileInputRef.current?.click();
+            }}
+            aria-label="Change profile photo"
             className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md transition-transform hover:scale-110"
           >
             <Camera className="h-3.5 w-3.5" />
